@@ -18,6 +18,7 @@ type EchoOptions struct {
 	BaseURL   string
 	Access    bool
 	PublicDir *embed.FS
+	Middleware []echo.MiddlewareFunc // Add this field
 }
 
 type EchoOption func(*EchoOptions) error
@@ -43,11 +44,26 @@ func NewEcho(opts ...EchoOption) error {
 	if options.Access {
 		e.Use(middleware.Logger())
 	}
+
+	// Apply custom middleware if provided
+	if options.Middleware != nil {
+		for _, m := range options.Middleware {
+			e.Use(m)
+		}
+	}
+
 	SetupRoutes(e, options)
 	SetupCors(e, options)
 
 	e.Logger.Fatal(e.Start(fmt.Sprintf("%s:%d", options.Host, options.Port)))
 	return nil
+}
+
+func WithMiddleware(middleware ...echo.MiddlewareFunc) EchoOption {
+	return func(o *EchoOptions) error {
+		o.Middleware = middleware
+		return nil
+	}
 }
 
 func SetupMiddlewares(e *echo.Echo) {
