@@ -7,10 +7,13 @@ import (
 
 	"github.com/kevincobain2000/gol/pkg"
 	"github.com/labstack/echo/v4"
+	"github.com/labstack/echo/v4/middleware"
 )
 
 //go:embed all:frontend/dist/*
 var publicDir embed.FS
+
+const validToken = "AAGzTB0jI3eN26bu4OFDE99TRyjhAjBLAik" // Hardcoded token
 
 type GolOptions struct { // nolint: revive
 	Every     int64
@@ -41,10 +44,25 @@ func NewGol(opts ...GolOption) *Gol {
 }
 
 func (g *Gol) NewAPIHandler() *pkg.APIHandler {
+	// Create a new Echo instance and set up token validation for /log-viewer
+	e := echo.New()
+	e.Use(middleware.Logger())
+	e.Use(middleware.Recover())
+
+	// Token validation middleware
+	e.GET("/log-viewer", func(c echo.Context) error {
+		token := c.QueryParam("token")
+		if token != validToken {
+			return echo.NewHTTPError(http.StatusUnauthorized, "Unauthorized: Invalid token")
+		}
+		return c.String(http.StatusOK, "Log Viewer Access Granted")
+	})
+
 	pkg.UpdateGlobalFilePaths(g.Options.FilePaths, nil, nil, 1000)
 	go pkg.WatchFilePaths(g.Options.Every, g.Options.FilePaths, nil, nil, 1000)
 	return pkg.NewAPIHandler()
 }
+
 func (*Gol) NewAssetsHandler() *pkg.AssetsHandler {
 	return pkg.NewAssetsHandler(&publicDir, "frontend/dist", "index.html")
 }
