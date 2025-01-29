@@ -165,10 +165,9 @@ func FileStats(filePath string, isRemote bool, sshConfig *SSHConfig) (int, int64
 	var linesCount int
 	scanner := bufio.NewScanner(reader)
 
-	// Increase the buffer size to handle larger lines
-	const maxCapacity = 1024 * 1024 * 10 // 10MB
-	buf := make([]byte, maxCapacity)
-	scanner.Buffer(buf, maxCapacity)
+	scanner := bufio.NewScanner(reader)
+        buf := make([]byte, 1024*1024) // 1MB buffer
+        scanner.Buffer(buf, len(buf))  // Increase the scanner buffer size
 
 	for scanner.Scan() {
 		linesCount++
