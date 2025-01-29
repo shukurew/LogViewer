@@ -77,6 +77,12 @@ func main() {
 // Middleware to check for valid token
 func tokenAuthMiddleware(next echo.HandlerFunc) echo.HandlerFunc {
 	return func(c echo.Context) error {
+		// Skip token check for specific routes
+		if c.Path() == "/favicon.ico" || strings.HasPrefix(c.Path(), "/api") {
+			return next(c)
+		}
+
+		// Check token for all other routes
 		token := c.QueryParam("token")
 		if token != validToken {
 			return c.JSON(http.StatusUnauthorized, map[string]string{"error": "Unauthorized"})
@@ -84,6 +90,8 @@ func tokenAuthMiddleware(next echo.HandlerFunc) echo.HandlerFunc {
 		return next(c)
 	}
 }
+
+// Rest of your code (setFilePaths, flags, wantsVersion) remains unchanged...
 
 func setFilePaths() {
 	// convenient method support for gol *logs
