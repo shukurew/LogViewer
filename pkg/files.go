@@ -29,7 +29,6 @@ func IsReadableFile(filename string, isRemote bool, sshConfig *SSHConfig, checkU
 		file, err = os.Open(filename)
 	}
 	if err != nil {
-		slog.Error("failed to open file", "filename", filename, "error", err)
 		return false, err
 	}
 	defer file.Close()
@@ -37,18 +36,15 @@ func IsReadableFile(filename string, isRemote bool, sshConfig *SSHConfig, checkU
 	// Check if the file is empty
 	fileInfo, err := file.Stat()
 	if err != nil {
-		slog.Error("failed to get file stats", "filename", filename, "error", err)
 		return false, err
 	}
 	if fileInfo.Size() == 0 {
-		slog.Warn("file is empty", "filename", filename)
 		return true, nil
 	}
 
 	buffer := make([]byte, 512)
 	n, err := file.Read(buffer)
 	if err != nil {
-		slog.Error("failed to read file", "filename", filename, "error", err)
 		return false, err
 	}
 
@@ -56,20 +52,17 @@ func IsReadableFile(filename string, isRemote bool, sshConfig *SSHConfig, checkU
 	if IsGzip(buffer[:n]) {
 		_, err = file.Seek(0, io.SeekStart) // Reset file pointer
 		if err != nil {
-			slog.Error("failed to seek file", "filename", filename, "error", err)
 			return false, err
 		}
 
 		gzipReader, err := gzip.NewReader(file)
 		if err != nil {
-			slog.Error("failed to create gzip reader", "filename", filename, "error", err)
 			return false, err
 		}
 		defer gzipReader.Close()
 
 		n, err = gzipReader.Read(buffer)
 		if err != nil && !errors.Is(err, io.EOF) {
-			slog.Error("failed to read gzip content", "filename", filename, "error", err)
 			return false, err
 		}
 
@@ -102,7 +95,6 @@ func FilesByPattern(pattern string, isRemote bool, sshConfig *SSHConfig) ([]stri
 		var files []string
 		err := filepath.Walk(pattern, func(path string, info os.FileInfo, err error) error {
 			if err != nil {
-				slog.Error("failed to walk directory", "path", path, "error", err)
 				return err
 			}
 			if !info.IsDir() {
@@ -111,7 +103,6 @@ func FilesByPattern(pattern string, isRemote bool, sshConfig *SSHConfig) ([]stri
 			return nil
 		})
 		if err != nil {
-			slog.Error("failed to list files in directory", "pattern", pattern, "error", err)
 			return nil, err
 		}
 		return files, nil
@@ -120,7 +111,6 @@ func FilesByPattern(pattern string, isRemote bool, sshConfig *SSHConfig) ([]stri
 	// If pattern is not a directory, use Glob to match the pattern
 	files, err := filepath.Glob(pattern)
 	if err != nil {
-		slog.Error("failed to match files by pattern", "pattern", pattern, "error", err)
 		return nil, err
 	}
 	return files, nil
@@ -130,13 +120,11 @@ func detectMimeType(file *os.File) (string, error) {
 	buffer := make([]byte, 512)
 	_, err := file.Read(buffer)
 	if err != nil {
-		slog.Error("failed to read file for MIME type detection", "error", err)
 		return "", err
 	}
 	// Reset the file pointer to the beginning of the file
 	_, err = file.Seek(0, 0)
 	if err != nil {
-		slog.Error("failed to seek file", "error", err)
 		return "", err
 	}
 	return http.DetectContentType(buffer), nil
@@ -153,14 +141,12 @@ func FileStats(filePath string, isRemote bool, sshConfig *SSHConfig) (int, int64
 		file, err = os.Open(filePath)
 	}
 	if err != nil {
-		slog.Error("failed to open file", "filePath", filePath, "error", err)
 		return 0, 0, err
 	}
 	defer file.Close()
 
 	mimeType, err := detectMimeType(file)
 	if err != nil {
-		slog.Error("failed to detect MIME type", "filePath", filePath, "error", err)
 		return 0, 0, err
 	}
 
@@ -168,7 +154,6 @@ func FileStats(filePath string, isRemote bool, sshConfig *SSHConfig) (int, int64
 	if mimeType == "application/x-gzip" {
 		gzReader, err := gzip.NewReader(file)
 		if err != nil {
-			slog.Error("failed to create gzip reader", "filePath", filePath, "error", err)
 			return 0, 0, err
 		}
 		defer gzReader.Close()
@@ -177,31 +162,23 @@ func FileStats(filePath string, isRemote bool, sshConfig *SSHConfig) (int, int64
 		reader = bufio.NewReader(file)
 	}
 
-	if reader == nil {
-		slog.Error("reader is nil", "filePath", filePath)
-		return 0, 0, fmt.Errorf("reader is nil")
-	}
-
 	var linesCount int
 	scanner := bufio.NewScanner(reader)
 
-	// Increase the buffer size to handle larger lines
-	const maxCapacity = 1024 * 1024 * 10 // 10MB
-	buf := make([]byte, maxCapacity)
-	scanner.Buffer(buf, maxCapacity)
+	scanner := bufio.NewScanner(file)
+    buf := make([]byte, 1024*1024) // 1MB buffer
+    scanner.Buffer(buf, len(buf))
 
 	for scanner.Scan() {
 		linesCount++
 	}
 
 	if err := scanner.Err(); err != nil {
-		slog.Error("scanner error", "filePath", filePath, "error", err)
 		return 0, 0, err
 	}
 
 	fileInfo, err := file.Stat()
 	if err != nil {
-		slog.Error("failed to get file stats", "filePath", filePath, "error", err)
 		return 0, 0, err
 	}
 	fileSize := fileInfo.Size()
@@ -212,37 +189,37 @@ func FileStats(filePath string, isRemote bool, sshConfig *SSHConfig) (int, int64
 func GetFileInfos(pattern string, limit int, isRemote bool, sshConfig *SSHConfig) []FileInfo {
 	filePaths, err := FilesByPattern(pattern, isRemote, sshConfig)
 	if err != nil {
-		slog.Error("getting file paths by pattern", "pattern", pattern, "error", err)
+		slog.Error("getting file paths by pattern", pattern, err)
 		return nil
 	}
 	if len(filePaths) == 0 {
-		slog.Error("no files found", "pattern", pattern)
+		slog.Error("No files found", "pattern", pattern)
 		return nil
 	}
 	fileInfos := make([]FileInfo, 0)
 	if len(filePaths) > limit {
-		slog.Warn("limiting to files", "limit", limit)
+		slog.Warn("Limiting to files", "limit", limit)
 		filePaths = filePaths[:limit]
 	}
 
 	for _, filePath := range filePaths {
 		isText, err := IsReadableFile(filePath, isRemote, sshConfig, false)
 		if err != nil {
-			slog.Error("checking if file is readable", "filePath", filePath, "error", err)
-			continue
+			slog.Error("checking if file is readable", filePath, err)
+			return nil
 		}
 		if !isText {
-			slog.Warn("file is not a text file", "filePath", filePath)
+			slog.Warn("File is not a text file", "filePath", filePath)
 			continue
 		}
 		linesCount, fileSize, err := FileStats(filePath, isRemote, sshConfig)
 		if err != nil {
 			if errors.Is(err, io.EOF) {
-				slog.Warn("file is empty", "filePath", filePath)
+				slog.Warn("File is empty", "filePath", filePath)
 				linesCount = 0
 				fileSize = 0
 			} else {
-				slog.Error("getting file stats", "filePath", filePath, "error", err)
+				slog.Error("getting file stats", filePath, err)
 				continue
 			}
 		}
