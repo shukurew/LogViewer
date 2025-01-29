@@ -69,7 +69,7 @@ ${r?'Expression: "'+r+`"
   let baseURL = currentURL.origin + currentURL.pathname;
   // check if currentURL is 4321 then use http://localhost:3003 for baseURL (for local development)
   if (currentURL.port === "4321") {
-    baseURL = "http://localhost:3003"
+    baseURL = "http://0.0.0.0:3003"
   }
   baseURL = baseURL.startsWith("http") ? baseURL : currentURL + baseURL;
   // remove trailing slash
