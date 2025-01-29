@@ -55,16 +55,19 @@ func main() {
 	defer pkg.Cleanup()
 	pkg.HandleCltrC(pkg.Cleanup)
 
-	err := pkg.NewEcho(func(o *pkg.EchoOptions) error {
-		o.Host = f.host
-		o.Port = f.port
-		o.Cors = f.cors
-		o.Access = f.access
-		o.BaseURL = f.baseURL
-		o.PublicDir = &publicDir
-		o.Middleware = []echo.MiddlewareFunc{tokenAuthMiddleware}
-		return nil
-	})
+	// Start the Echo server with token-based authentication middleware
+	err := pkg.NewEcho(
+		pkg.WithMiddleware(tokenAuthMiddleware), // Add your middleware here
+		func(o *pkg.EchoOptions) error {
+			o.Host = f.host
+			o.Port = f.port
+			o.Cors = f.cors
+			o.Access = f.access
+			o.BaseURL = f.baseURL
+			o.PublicDir = &publicDir
+			return nil
+		},
+	)
 	if err != nil {
 		slog.Error("starting echo", "echo", err)
 		return
