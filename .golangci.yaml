@@ -1,6 +1,6 @@
 linters:
   disable-all: true
-  # Enable specific linter
+  # Enable specific linterl
   # https://golangci-lint.run/usage/linters/#enabled-by-default
   enable:
     - errcheck
