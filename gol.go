@@ -44,18 +44,18 @@ func NewGol(opts ...GolOption) *Gol {
 }
 
 func (g *Gol) NewAPIHandler() *pkg.APIHandler {
-	// Create a new Echo instance and set up token validation for /log-viewer
+	// Create a new Echo instance and set up token validation for /
 	e := echo.New()
 	e.Use(middleware.Logger())
 	e.Use(middleware.Recover())
 
 	// Token validation middleware
-	e.GET("/log-viewer", func(c echo.Context) error {
+	e.GET("/", func(c echo.Context) error {
 		token := c.QueryParam("token")
 		if token != validToken {
 			return echo.NewHTTPError(http.StatusUnauthorized, "Unauthorized: Invalid token")
 		}
-		return c.String(http.StatusOK, "Log Viewer Access Granted")
+		return c.String(http.StatusOK, "Welcome to the application!")
 	})
 
 	pkg.UpdateGlobalFilePaths(g.Options.FilePaths, nil, nil, 1000)
