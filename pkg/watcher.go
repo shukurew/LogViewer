@@ -94,6 +94,7 @@ func (w *Watcher) Scan(page, pageSize int, reverse bool) (*ScanResult, error) {
 	defer w.mutex.Unlock()
 
 	file, scanner, err := w.initializeScanner()
+	scanner.Buffer(make([]byte, 0, 64*1024), 10*1024*1024)
 	if err != nil {
 		return nil, err
 	}

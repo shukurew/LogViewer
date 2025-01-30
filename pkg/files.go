@@ -164,7 +164,6 @@ func FileStats(filePath string, isRemote bool, sshConfig *SSHConfig) (int, int64
 
 	var linesCount int
 	scanner := bufio.NewScanner(reader)
-	scanner.Buffer(make([]byte, 0, 64*1024), 5*1024*1024) // 5MB buffer
 	for scanner.Scan() {
 		linesCount++
 	}
