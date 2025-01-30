@@ -164,12 +164,6 @@ func FileStats(filePath string, isRemote bool, sshConfig *SSHConfig) (int, int64
 
 	var linesCount int
 	scanner := bufio.NewScanner(reader)
-
-	// Increase the scanner buffer size to handle large lines
-	const maxBufferSize = 1024 * 1024 // 1MB
-	buf := make([]byte, 0, maxBufferSize)
-	scanner.Buffer(buf, maxBufferSize)
-
 	for scanner.Scan() {
 		linesCount++
 	}
@@ -190,37 +184,37 @@ func FileStats(filePath string, isRemote bool, sshConfig *SSHConfig) (int, int64
 func GetFileInfos(pattern string, limit int, isRemote bool, sshConfig *SSHConfig) []FileInfo {
 	filePaths, err := FilesByPattern(pattern, isRemote, sshConfig)
 	if err != nil {
-		slog.Error("getting file paths by pattern", "pattern", pattern, "error", err)
+		slog.Error("getting file paths by pattern", pattern, err)
 		return nil
 	}
 	if len(filePaths) == 0 {
-		slog.Error("no files found", "pattern", pattern)
+		slog.Error("No files found", "pattern", pattern)
 		return nil
 	}
 	fileInfos := make([]FileInfo, 0)
 	if len(filePaths) > limit {
-		slog.Warn("limiting to files", "limit", limit)
+		slog.Warn("Limiting to files", "limit", limit)
 		filePaths = filePaths[:limit]
 	}
 
 	for _, filePath := range filePaths {
 		isText, err := IsReadableFile(filePath, isRemote, sshConfig, false)
 		if err != nil {
-			slog.Error("checking if file is readable", "filePath", filePath, "error", err)
-			continue
+			slog.Error("checking if file is readable", filePath, err)
+			return nil
 		}
 		if !isText {
-			slog.Warn("file is not a text file", "filePath", filePath)
+			slog.Warn("File is not a text file", "filePath", filePath)
 			continue
 		}
 		linesCount, fileSize, err := FileStats(filePath, isRemote, sshConfig)
 		if err != nil {
 			if errors.Is(err, io.EOF) {
-				slog.Warn("file is empty", "filePath", filePath)
+				slog.Warn("File is empty", "filePath", filePath)
 				linesCount = 0
 				fileSize = 0
 			} else {
-				slog.Error("getting file stats", "filePath", filePath, "error", err)
+				slog.Error("getting file stats", filePath, err)
 				continue
 			}
 		}
