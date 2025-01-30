@@ -164,6 +164,10 @@ func FileStats(filePath string, isRemote bool, sshConfig *SSHConfig) (int, int64
 
 	var linesCount int
 	scanner := bufio.NewScanner(reader)
+	if maxBufferMB > 0 {
+		// Initialize the buffer with a small initial size (64KB) and a maximum size (maxBufferMB MB)
+		scanner.Buffer(make([]byte, 0, 64*1024), maxBufferMB*1024*1024)
+	}
 	for scanner.Scan() {
 		linesCount++
 	}
@@ -181,7 +185,7 @@ func FileStats(filePath string, isRemote bool, sshConfig *SSHConfig) (int, int64
 	return linesCount, fileSize, nil
 }
 
-func GetFileInfos(pattern string, limit int, isRemote bool, sshConfig *SSHConfig) []FileInfo {
+func GetFileInfos(pattern string, limit int, isRemote bool, sshConfig *SSHConfig, maxBufferMB) []FileInfo {
 	filePaths, err := FilesByPattern(pattern, isRemote, sshConfig)
 	if err != nil {
 		slog.Error("getting file paths by pattern", pattern, err)
@@ -207,7 +211,7 @@ func GetFileInfos(pattern string, limit int, isRemote bool, sshConfig *SSHConfig
 			slog.Warn("File is not a text file", "filePath", filePath)
 			continue
 		}
-		linesCount, fileSize, err := FileStats(filePath, isRemote, sshConfig)
+		linesCount, fileSize, err := FileStats(filePath, isRemote, sshConfig, maxBufferMB)
 		if err != nil {
 			if errors.Is(err, io.EOF) {
 				slog.Warn("File is empty", "filePath", filePath)
