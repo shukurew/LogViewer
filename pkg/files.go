@@ -31,6 +31,9 @@ func IsReadableFile(filename string, isRemote bool, sshConfig *SSHConfig, checkU
 	if err != nil {
 		return false, err
 	}
+    if file == nil {
+		return false, errors.New("file pointer is nil")
+	}
 	defer file.Close()
 
 	// Check if the file is empty
