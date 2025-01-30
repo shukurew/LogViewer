@@ -185,7 +185,7 @@ func FileStats(filePath string, isRemote bool, sshConfig *SSHConfig) (int, int64
 	return linesCount, fileSize, nil
 }
 
-func GetFileInfos(pattern string, limit int, isRemote bool, sshConfig *SSHConfig, maxBufferMB) []FileInfo {
+func GetFileInfos(pattern string, limit int, isRemote bool, sshConfig *SSHConfig) []FileInfo {
 	filePaths, err := FilesByPattern(pattern, isRemote, sshConfig)
 	if err != nil {
 		slog.Error("getting file paths by pattern", pattern, err)
@@ -211,7 +211,7 @@ func GetFileInfos(pattern string, limit int, isRemote bool, sshConfig *SSHConfig
 			slog.Warn("File is not a text file", "filePath", filePath)
 			continue
 		}
-		linesCount, fileSize, err := FileStats(filePath, isRemote, sshConfig, maxBufferMB)
+		linesCount, fileSize, err := FileStats(filePath, isRemote, sshConfig)
 		if err != nil {
 			if errors.Is(err, io.EOF) {
 				slog.Warn("File is empty", "filePath", filePath)
