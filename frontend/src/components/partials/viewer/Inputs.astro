@@ -8,14 +8,14 @@
       <div
         class="absolute pt-2.5 start-0 flex items-center ps-3 pointer-events-none text-md text-gray-500"
       >
-        <b class="text-green-400">Match Regex</b>
+        <b class="text-green-400">Search: </b>
       </div>
       <input
         type="text"
         x-model="input.query"
         @input.debounce.500ms="submit"
         class="block font-mono font-bold w-full p-3 ps-32 text-sm text-slate-300 hover:text-slate-200 border-gray-600 rounded-lg bg-gray-900 focus:outline-none"
-        placeholder=".*"
+        placeholder="...."
       />
       <span
         class="absolute end-0.5 bottom-1.5 text-slate-300 text-sm px-4 py-0"
