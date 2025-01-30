@@ -166,7 +166,7 @@ func FileStats(filePath string, isRemote bool, sshConfig *SSHConfig) (int, int64
 	scanner := bufio.NewScanner(reader)
 
 	// Increase buffer size to 10MB
-	buf := make([]byte, 10*1024*1024) // 10MB buffer
+	buf := make([]byte, 50*1024*1024) // 10MB buffer
 	scanner.Buffer(buf, len(buf))
 
 	for scanner.Scan() {
