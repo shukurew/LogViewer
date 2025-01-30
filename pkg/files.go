@@ -150,20 +150,23 @@ func FileStats(filePath string, isRemote bool, sshConfig *SSHConfig) (int, int64
 		return 0, 0, err
 	}
 
-	var reader *bufio.Reader
+	var reader io.Reader
 	if mimeType == "application/x-gzip" {
 		gzReader, err := gzip.NewReader(file)
 		if err != nil {
 			return 0, 0, err
 		}
 		defer gzReader.Close()
-		reader = bufio.NewReader(gzReader)
+		reader = gzReader
 	} else {
-		reader = bufio.NewReader(file)
+		reader = file
 	}
 
-	var linesCount int
 	scanner := bufio.NewScanner(reader)
+	buf := make([]byte, 0, 64*1024) // 64KB buffer
+	scanner.Buffer(buf, 10*1024*1024) // Increase the max buffer size to 10MB
+
+	var linesCount int
 	for scanner.Scan() {
 		linesCount++
 	}
@@ -180,6 +183,7 @@ func FileStats(filePath string, isRemote bool, sshConfig *SSHConfig) (int, int64
 
 	return linesCount, fileSize, nil
 }
+
 
 func GetFileInfos(pattern string, limit int, isRemote bool, sshConfig *SSHConfig) []FileInfo {
 	filePaths, err := FilesByPattern(pattern, isRemote, sshConfig)
