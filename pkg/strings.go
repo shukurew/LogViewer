@@ -67,11 +67,11 @@ func JudgeLogLevel(line string, keywordPosition int) string {
 
 	// Keywords for different log levels
 	successKeywords := []string{"success", "SUCCESS", "succ", "SUCC", "Success"}
-	infoKeywords := []string{"info", "inf", "INFO", "INF", "Info", "Inf"}
-	errorKeywords := []string{"error", "err", "fail", "ERROR", "ERR", "FAIL", "Error", "Err", "Fail"}
-	warnKeywords := []string{"warn", "warning", "alert", "wrn", "WARN", "WARNING", "ALERT", "Wrn", "Wrning", "Alert"}
+	infoKeywords := []string{"info", "inf", "INFO", "INF", "Info", "Inf", "production.INFO:", "local.INFO:"}
+	errorKeywords := []string{"error", "err", "fail", "ERROR", "ERR", "FAIL", "Error", "Err", "Fail", "production.ERROR:", "local.ERROR:"}
+	warnKeywords := []string{"warn", "warning", "alert", "wrn", "WARN", "WARNING", "ALERT", "Wrn", "Wrning", "Alert", "production.WARNING:", "local.WARNING:"}
 	dangerKeywords := []string{"danger", "fatal", "severe", "critical", "DANGER", "FATAL", "SEVERE", "CRITICAL", "Danger", "Fatal", "Severe", "Critical"}
-	debugKeywords := []string{"debug", "dbg", "DEBUG", "DBG", "Debug"}
+	debugKeywords := []string{"debug", "dbg", "DEBUG", "DBG", "Debug", "production.DEBUG:", "local.DEBUG:"}
 
 	// Helper function to check if a keyword is at a specific position
 	isKeywordAtPosition := func(line, keyword string, position int) bool {
