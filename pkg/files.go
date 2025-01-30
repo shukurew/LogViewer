@@ -164,10 +164,12 @@ func FileStats(filePath string, isRemote bool, sshConfig *SSHConfig) (int, int64
 
 	var linesCount int
 	scanner := bufio.NewScanner(reader)
-	if maxBufferMB > 0 {
-		// Initialize the buffer with a small initial size (64KB) and a maximum size (maxBufferMB MB)
-		scanner.Buffer(make([]byte, 0, 64*1024), maxBufferMB*1024*1024)
-	}
+
+	// Increase the scanner buffer size to handle large lines
+	const maxBufferSize = 1024 * 1024 // 1MB
+	buf := make([]byte, 0, maxBufferSize)
+	scanner.Buffer(buf, maxBufferSize)
+
 	for scanner.Scan() {
 		linesCount++
 	}
@@ -188,37 +190,37 @@ func FileStats(filePath string, isRemote bool, sshConfig *SSHConfig) (int, int64
 func GetFileInfos(pattern string, limit int, isRemote bool, sshConfig *SSHConfig) []FileInfo {
 	filePaths, err := FilesByPattern(pattern, isRemote, sshConfig)
 	if err != nil {
-		slog.Error("getting file paths by pattern", pattern, err)
+		slog.Error("getting file paths by pattern", "pattern", pattern, "error", err)
 		return nil
 	}
 	if len(filePaths) == 0 {
-		slog.Error("No files found", "pattern", pattern)
+		slog.Error("no files found", "pattern", pattern)
 		return nil
 	}
 	fileInfos := make([]FileInfo, 0)
 	if len(filePaths) > limit {
-		slog.Warn("Limiting to files", "limit", limit)
+		slog.Warn("limiting to files", "limit", limit)
 		filePaths = filePaths[:limit]
 	}
 
 	for _, filePath := range filePaths {
 		isText, err := IsReadableFile(filePath, isRemote, sshConfig, false)
 		if err != nil {
-			slog.Error("checking if file is readable", filePath, err)
-			return nil
+			slog.Error("checking if file is readable", "filePath", filePath, "error", err)
+			continue
 		}
 		if !isText {
-			slog.Warn("File is not a text file", "filePath", filePath)
+			slog.Warn("file is not a text file", "filePath", filePath)
 			continue
 		}
 		linesCount, fileSize, err := FileStats(filePath, isRemote, sshConfig)
 		if err != nil {
 			if errors.Is(err, io.EOF) {
-				slog.Warn("File is empty", "filePath", filePath)
+				slog.Warn("file is empty", "filePath", filePath)
 				linesCount = 0
 				fileSize = 0
 			} else {
-				slog.Error("getting file stats", filePath, err)
+				slog.Error("getting file stats", "filePath", filePath, "error", err)
 				continue
 			}
 		}
